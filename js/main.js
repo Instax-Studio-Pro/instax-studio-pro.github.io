@@ -4,6 +4,9 @@
  */
 
 const App = (() => {
+  // ID counter for unique image IDs
+  let nextImageId = 1;
+
   // State
   const state = {
     images: [],           // Array of { id, file, originalCanvas, processedCanvas, thumbnail }
@@ -134,7 +137,7 @@ const App = (() => {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
 
-          const id = Date.now() + Math.random();
+          const id = nextImageId++;
           state.images.push({
             id,
             file,
@@ -863,6 +866,8 @@ const App = (() => {
 
   function updatePreview() {
     if (state.selectedIndex < 0) { clearPreview(); return; }
+    const emptyState = document.getElementById('empty-state');
+    if (emptyState) emptyState.classList.add('hidden');
 
     const processed = getProcessedCanvas();
     if (!processed) return;
@@ -982,6 +987,8 @@ const App = (() => {
     if (previewCanvas && previewCtx) {
       previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
     }
+    const emptyState = document.getElementById('empty-state');
+    if (emptyState) emptyState.classList.remove('hidden');
     const frameContainer = document.getElementById('frame-preview');
     if (frameContainer) frameContainer.innerHTML = '<p class="text-gray-500 text-sm">No image selected</p>';
   }
@@ -1103,7 +1110,7 @@ const App = (() => {
           ctx.drawImage(img, 0, 0);
 
           state.images.push({
-            id: Date.now() + Math.random(),
+            id: nextImageId++,
             file: null,
             originalCanvas: canvas,
             processedCanvas: null,

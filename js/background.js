@@ -18,6 +18,8 @@ const BackgroundEngine = (() => {
     gradientOcean: { name: 'Ocean', color: null, type: 'gradient', gradient: ['#667EEA', '#764BA2'] },
   };
 
+  const BG_REMOVAL_THRESHOLD = 60;
+
   /**
    * Simple foreground segmentation using color-based approach
    * This is a basic implementation; for production, use TensorFlow.js or remove.bg API
@@ -59,7 +61,7 @@ const BackgroundEngine = (() => {
       avgB /= samples.length;
 
       // Remove pixels similar to background
-      const threshold = 60;
+      const threshold = BG_REMOVAL_THRESHOLD;
       for (let i = 0; i < d.length; i += 4) {
         const dr = d[i] - avgR;
         const dg = d[i + 1] - avgG;

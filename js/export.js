@@ -11,6 +11,10 @@ const ExportEngine = (() => {
     wide: { filmW: 108, filmH: 86, imgW: 99, imgH: 62 },
   };
 
+  function generateTimestamp() {
+    return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  }
+
   /**
    * Draw an Instax frame around an image on a canvas
    */
@@ -92,7 +96,7 @@ const ExportEngine = (() => {
   function exportImage(canvas, format = 'png', quality = 0.92) {
     const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
     const ext = format === 'jpg' ? 'jpg' : 'png';
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const timestamp = generateTimestamp();
     const filename = `instax-studio-${timestamp}.${ext}`;
 
     canvas.toBlob((blob) => {
@@ -182,7 +186,7 @@ const ExportEngine = (() => {
       pdf.addImage(imgData, 'JPEG', x, y, frameW, frameH);
     });
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const timestamp = generateTimestamp();
     pdf.save(`instax-studio-${timestamp}.pdf`);
   }
 

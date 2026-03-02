@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instax Studio Pro – Web Based Instant Photo Print Designer</title>
+  <meta name="description" content="Professional web-based instant photo print designer with Instax-style filters, frames, and export options.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            charcoal: '#111827',
+            cream: '#FDF6E3',
+            gold: '#C6A75E',
+            'gold-light': '#d4b76a',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb" crossorigin="anonymous"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+
+<body class="bg-charcoal text-white min-h-screen studio-gradient">
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
+    <div class="flex flex-col items-center gap-4">
+      <div class="spinner"></div>
+      <p class="text-gold text-sm">Processing...</p>
+    </div>
+  </div>
+
+  <!-- Shutter Flash Effect -->
+  <div id="shutter-flash" class="hidden fixed inset-0 bg-white z-40 pointer-events-none"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+  <!-- Print Area (hidden, used for print mode) -->
+  <div id="print-area" class="no-print hidden"></div>
+
+  <!-- ============ HEADER ============ -->
+  <header class="glass sticky top-0 z-30 no-print">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gold rounded-lg flex items-center justify-center text-charcoal font-bold text-lg shadow-lg">
+          📷
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-cream tracking-wide">Instax Studio <span class="text-gold">Pro</span></h1>
+          <p class="text-xs text-gray-400 hidden sm:block">Web Based Instant Photo Print Designer</p>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-2">
+        <button type="button" id="theme-toggle" class="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm transition-colors" title="Toggle Theme">☀️</button>
+        <button type="button" id="save-project" class="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm transition-colors hidden sm:block" title="Save Project">💾 Save</button>
+        <button type="button" id="load-project" class="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm transition-colors hidden sm:block" title="Load Project">📂 Load</button>
+        <button type="button" id="print-btn" class="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm transition-colors" title="Print">🖨️ <span class="hidden sm:inline">Print</span></button>
+
+        <!-- Export Dropdown -->
+        <div class="relative group">
+          <button type="button" class="px-4 py-2 rounded-lg bg-gold text-charcoal font-semibold text-sm hover:bg-gold-light transition-colors shadow-lg">
+            📤 Export
+          </button>
+          <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700 hidden group-hover:block z-20">
+            <button type="button" id="export-jpg" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-700 rounded-t-lg transition-colors">📸 Export as JPG</button>
+            <button type="button" id="export-png" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-700 transition-colors">🖼️ Export as PNG</button>
+            <button type="button" id="export-pdf" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-700 transition-colors">📄 Export as PDF</button>
+            <button type="button" id="export-collage" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-700 rounded-b-lg transition-colors">🎞️ Export Collage</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MAIN LAYOUT ============ -->
+  <main class="max-w-7xl mx-auto px-4 py-4 no-print">
+    <div class="flex flex-col lg:flex-row gap-4">
+
+      <!-- ====== LEFT PANEL ====== -->
+      <div id="left-panel" class="w-full lg:w-80 xl:w-96 flex-shrink-0 space-y-4">
+
+        <!-- Upload Area -->
+        <section class="glass rounded-xl p-4">
+          <h2 class="text-sm font-semibold text-gold mb-3 flex items-center gap-2">
+            <span>📷</span> Image Upload
+          </h2>
+          <div id="drop-zone" class="drop-zone rounded-xl p-6 text-center cursor-pointer hover:bg-gray-800 transition-all">
+            <div class="text-3xl mb-2">📁</div>
+            <p class="text-sm text-gray-400">Drag &amp; drop images here</p>
+            <p class="text-xs text-gray-500 mt-1">or click to browse (JPG, PNG)</p>
+          </div>
+          <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png" multiple>
+
+          <!-- Thumbnail Grid -->
+          <div id="thumbnail-grid" class="flex flex-wrap gap-2 mt-3 max-h-40 overflow-y-auto"></div>
+        </section>
+
+        <!-- Film Type Selector -->
+        <section class="glass rounded-xl p-4">
+          <h2 class="text-sm font-semibold text-gold mb-3 flex items-center gap-2">
+            <span>🎞️</span> Film Type
+          </h2>
+          <div class="flex gap-2">
+            <button type="button" data-film-type="mini" class="flex-1 py-2 px-3 rounded-lg bg-yellow-700 text-white text-xs font-medium transition-colors hover:bg-yellow-600">
+              📸 Mini<br><span class="text-[10px] opacity-70">54×86mm</span>
+            </button>
+            <button type="button" data-film-type="square" class="flex-1 py-2 px-3 rounded-lg bg-gray-700 text-white text-xs font-medium transition-colors hover:bg-gray-600">
+              📸 Square<br><span class="text-[10px] opacity-70">62×62mm</span>
+            </button>
+            <button type="button" data-film-type="wide" class="flex-1 py-2 px-3 rounded-lg bg-gray-700 text-white text-xs font-medium transition-colors hover:bg-gray-600">
+              📸 Wide<br><span class="text-[10px] opacity-70">86×108mm</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Filter Presets -->
+        <section class="glass rounded-xl p-4">
+          <button type="button" data-collapse="filter-content" class="w-full text-sm font-semibold text-gold mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-2"><span>🎨</span> Filters</span>
+            <span class="collapse-icon text-xs">▼</span>
+          </button>
+          <div id="filter-content" class="collapsible-content expanded">
+            <div id="filter-presets" class="flex gap-2 overflow-x-auto pb-2"></div>
+          </div>
+        </section>
+
+        <!-- Adjustment Sliders -->
+        <section class="glass rounded-xl p-4">
+          <button type="button" data-collapse="slider-content" class="w-full text-sm font-semibold text-gold mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-2"><span>🎛️</span> Adjustments</span>
+            <span class="collapse-icon text-xs">▼</span>
+          </button>
+          <div id="slider-content" class="collapsible-content expanded space-y-3">
+            <!-- Brightness -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Brightness</span>
+                <span id="label-brightness">0</span>
+              </div>
+              <input type="range" id="slider-brightness" min="-100" max="100" value="0" class="w-full">
+            </div>
+            <!-- Contrast -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Contrast</span>
+                <span id="label-contrast">0</span>
+              </div>
+              <input type="range" id="slider-contrast" min="-100" max="100" value="0" class="w-full">
+            </div>
+            <!-- Saturation -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Saturation</span>
+                <span id="label-saturation">0</span>
+              </div>
+              <input type="range" id="slider-saturation" min="-100" max="100" value="0" class="w-full">
+            </div>
+            <!-- Temperature -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Temperature</span>
+                <span id="label-temperature">0</span>
+              </div>
+              <input type="range" id="slider-temperature" min="-100" max="100" value="0" class="w-full">
+            </div>
+            <!-- Sharpness -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Sharpness</span>
+                <span id="label-sharpness">0</span>
+              </div>
+              <input type="range" id="slider-sharpness" min="0" max="100" value="0" class="w-full">
+            </div>
+          </div>
+        </section>
+
+        <!-- Background Presets -->
+        <section class="glass rounded-xl p-4">
+          <button type="button" data-collapse="bg-content" class="w-full text-sm font-semibold text-gold mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-2"><span>🖼️</span> Background</span>
+            <span class="collapse-icon text-xs">▼</span>
+          </button>
+          <div id="bg-content" class="collapsible-content expanded">
+            <button type="button" id="remove-bg-btn" class="w-full py-2 px-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs font-medium transition-colors mb-3">
+              ✂️ Remove Background
+            </button>
+            <div id="bg-presets" class="flex flex-wrap gap-2"></div>
+          </div>
+        </section>
+
+        <!-- Extra Options -->
+        <section class="glass rounded-xl p-4">
+          <button type="button" data-collapse="extras-content" class="w-full text-sm font-semibold text-gold mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-2"><span>✨</span> Extras</span>
+            <span class="collapse-icon text-xs">▶</span>
+          </button>
+          <div id="extras-content" class="collapsible-content space-y-3">
+            <!-- Film Dust -->
+            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+              <input type="checkbox" id="dust-toggle" class="rounded">
+              <span>Film dust overlay</span>
+            </label>
+            <!-- Date Stamp -->
+            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+              <input type="checkbox" id="date-toggle" class="rounded">
+              <span>Date stamp</span>
+            </label>
+            <input type="text" id="date-input" class="w-full bg-gray-800 text-xs text-gray-300 rounded px-2 py-1 border border-gray-700 focus:border-gold outline-none" placeholder="2024.01.01">
+            <!-- Caption -->
+            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+              <input type="checkbox" id="caption-toggle" class="rounded">
+              <span>Caption</span>
+            </label>
+            <input type="text" id="caption-input" class="w-full bg-gray-800 text-xs text-gray-300 rounded px-2 py-1 border border-gray-700 focus:border-gold outline-none" placeholder="Write your caption..." maxlength="50">
+            <!-- Quality -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Image Quality</span>
+                <span id="label-quality">92%</span>
+              </div>
+              <input type="range" id="slider-quality" min="10" max="100" value="92" class="w-full">
+            </div>
+            <!-- DPI -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Print DPI</span>
+              </div>
+              <select id="dpi-select" class="w-full bg-gray-800 text-xs text-gray-300 rounded px-2 py-1 border border-gray-700 focus:border-gold outline-none">
+                <option value="72">72 DPI (Screen)</option>
+                <option value="150">150 DPI</option>
+                <option value="300" selected>300 DPI (Print)</option>
+              </select>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ====== RIGHT PANEL ====== -->
+      <div class="flex-1 space-y-4">
+        <!-- Toolbar -->
+        <div class="glass rounded-xl p-3 flex flex-wrap items-center gap-2">
+          <button type="button" id="undo-btn" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Undo (Ctrl+Z)">↩️ Undo</button>
+          <button type="button" id="redo-btn" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Redo (Ctrl+Y)">↪️ Redo</button>
+          <div class="w-px h-6 bg-gray-600"></div>
+          <button type="button" id="crop-btn" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Crop">✂️ Crop</button>
+          <button type="button" id="rotate-left" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Rotate Left">↺</button>
+          <button type="button" id="rotate-right" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Rotate Right">↻</button>
+          <button type="button" id="flip-h" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Flip Horizontal">⇔</button>
+          <button type="button" id="flip-v" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Flip Vertical">⇕</button>
+          <div class="w-px h-6 bg-gray-600"></div>
+          <button type="button" id="zoom-in" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Zoom In">🔍+</button>
+          <button type="button" id="zoom-out" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Zoom Out">🔍−</button>
+          <button type="button" id="zoom-reset" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Reset Zoom">1:1</button>
+          <div class="w-px h-6 bg-gray-600"></div>
+          <button type="button" id="before-after-toggle" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Before/After">👁️ Before/After</button>
+          <button type="button" id="batch-apply" class="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Batch Apply Filter">🔄 Batch</button>
+          <button type="button" id="reset-btn" class="px-3 py-1.5 rounded-lg bg-red-900 hover:bg-red-800 text-xs transition-colors ml-auto" title="Reset All">🗑️ Reset</button>
+        </div>
+
+        <!-- Preview Area -->
+        <div class="glass rounded-xl p-4 flex flex-col lg:flex-row gap-4">
+          <!-- Canvas Preview -->
+          <div class="flex-1">
+            <h3 class="text-xs text-gray-400 mb-2 font-medium">Live Preview</h3>
+            <div id="preview-container" class="relative bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center min-h-[300px] lg:min-h-[450px]">
+              <canvas id="preview-canvas" class="transition-transform duration-200" width="300" height="400"></canvas>
+              <!-- Empty State -->
+              <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                <div class="text-5xl mb-4">📷</div>
+                <p class="text-sm">Upload an image to get started</p>
+                <p class="text-xs text-gray-600 mt-1">Drag &amp; drop or click the upload area</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Frame Preview -->
+          <div class="w-full lg:w-72 flex-shrink-0">
+            <h3 class="text-xs text-gray-400 mb-2 font-medium">Instax Frame Preview</h3>
+            <div id="frame-preview" class="bg-gray-900 rounded-xl p-4 flex items-center justify-center min-h-[300px] lg:min-h-[450px]">
+              <p class="text-gray-500 text-sm">No image selected</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ MOBILE BOTTOM BAR ============ -->
+  <div class="mobile-bottom-bar glass lg:hidden no-print">
+    <button type="button" id="mobile-filter-toggle" class="flex-1 py-2 rounded-lg bg-gray-700 text-xs font-medium text-center hover:bg-gray-600 transition-colors">
+      🎨 Tools
+    </button>
+    <button type="button" onclick="document.getElementById('export-jpg').click()" class="flex-1 py-2 rounded-lg bg-gold text-charcoal text-xs font-medium text-center hover:bg-gold-light transition-colors">
+      📤 Export
+    </button>
+    <button type="button" onclick="document.getElementById('print-btn').click()" class="flex-1 py-2 rounded-lg bg-gray-700 text-xs font-medium text-center hover:bg-gray-600 transition-colors">
+      🖨️ Print
+    </button>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="no-print max-w-7xl mx-auto px-4 py-6 mt-8 border-t border-gray-800 text-center text-xs text-gray-500">
+    <p>Instax Studio Pro &copy; 2024 – Professional Web Based Instant Photo Print Designer</p>
+    <p class="mt-1">Made with ❤️ for instant photography enthusiasts</p>
+  </footer>
+
+  <!-- ============ SCRIPTS ============ -->
+  <script src="js/filters.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>

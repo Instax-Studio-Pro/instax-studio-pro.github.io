@@ -275,7 +275,7 @@ const App = (() => {
       const img = state.images[index];
       if (img.settings) {
         state.currentFilter = img.settings.filter || 'none';
-        state.adjustments = { ...img.settings.adjustments } || { ...FilterEngine.DEFAULT_ADJUSTMENTS };
+        state.adjustments = img.settings.adjustments ? { ...img.settings.adjustments } : { ...FilterEngine.DEFAULT_ADJUSTMENTS };
         state.bgPreset = img.settings.bgPreset || 'none';
         state.rotation = img.settings.rotation || 0;
         state.flipH = img.settings.flipH || false;
@@ -622,7 +622,7 @@ const App = (() => {
       state.selectedIndex = i;
       if (img.settings) {
         state.currentFilter = img.settings.filter || 'none';
-        state.adjustments = { ...img.settings.adjustments } || { ...FilterEngine.DEFAULT_ADJUSTMENTS };
+        state.adjustments = img.settings.adjustments ? { ...img.settings.adjustments } : { ...FilterEngine.DEFAULT_ADJUSTMENTS };
         state.bgPreset = img.settings.bgPreset || 'none';
         state.rotation = img.settings.rotation || 0;
         state.flipH = img.settings.flipH || false;
@@ -1001,7 +1001,7 @@ const App = (() => {
       }
       
       // Delete key to remove selected image
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === 'Delete') {
         if (state.selectedIndex >= 0) {
           e.preventDefault();
           removeImage(state.selectedIndex);

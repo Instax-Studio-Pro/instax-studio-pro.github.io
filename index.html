@@ -135,6 +135,13 @@
           </div>
           <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png" multiple>
 
+          <!-- Image Management Toolbar -->
+          <div id="image-toolbar" class="hidden mt-3 flex flex-wrap items-center gap-2">
+            <span id="image-count" class="text-xs text-gray-400 mr-auto">0 images</span>
+            <button type="button" id="add-more-btn" class="px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-xs transition-colors" title="Add More Images">➕ Add</button>
+            <button type="button" id="clear-all-btn" class="px-2 py-1 rounded bg-red-800 hover:bg-red-700 text-xs transition-colors" title="Clear All Images">🗑️ Clear All</button>
+          </div>
+
           <!-- Thumbnail Grid -->
           <div id="thumbnail-grid" class="flex flex-wrap gap-2 mt-3 max-h-40 overflow-y-auto"></div>
         </section>

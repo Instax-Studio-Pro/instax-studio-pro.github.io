@@ -9,7 +9,7 @@ const App = (() => {
 
   // State
   const state = {
-    images: [],           // Array of { id, file, originalCanvas, processedCanvas, thumbnail }
+    images: [],           // Array of { id, file, originalCanvas, processedCanvas, thumbnail, settings }
     selectedIndex: -1,
     filmType: 'mini',     // mini | square | wide
     currentFilter: 'none',
@@ -36,6 +36,18 @@ const App = (() => {
     cropRect: null,
     beforeAfterMode: false,
   };
+
+  // Default per-image settings
+  function getDefaultImageSettings() {
+    return {
+      filter: 'none',
+      adjustments: { ...FilterEngine.DEFAULT_ADJUSTMENTS },
+      bgPreset: 'none',
+      rotation: 0,
+      flipH: false,
+      flipV: false,
+    };
+  }
 
   let previewCtx = null;
   let previewCanvas = null;
@@ -69,6 +81,8 @@ const App = (() => {
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
+    const addMoreBtn = document.getElementById('add-more-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
 
     if (uploadBtn) {
       uploadBtn.addEventListener('click', () => fileInput.click());
@@ -98,6 +112,54 @@ const App = (() => {
         handleFiles(e.target.files);
         e.target.value = '';
       });
+    }
+
+    // Add More button
+    if (addMoreBtn) {
+      addMoreBtn.addEventListener('click', () => fileInput.click());
+    }
+
+    // Clear All button
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', clearAllImages);
+    }
+  }
+
+  function clearAllImages() {
+    if (state.images.length === 0) {
+      showToast('No images to clear.', 'warning');
+      return;
+    }
+    
+    if (confirm('Are you sure you want to remove all images?')) {
+      state.images = [];
+      state.selectedIndex = -1;
+      state.bgRemoved = false;
+      state.foregroundCanvas = null;
+      state.history = [];
+      state.historyIndex = -1;
+      renderThumbnails();
+      clearPreview();
+      updateImageToolbar();
+      showToast('All images cleared.', 'info');
+    }
+  }
+
+  function updateImageToolbar() {
+    const toolbar = document.getElementById('image-toolbar');
+    const countEl = document.getElementById('image-count');
+    
+    if (toolbar) {
+      if (state.images.length > 0) {
+        toolbar.classList.remove('hidden');
+      } else {
+        toolbar.classList.add('hidden');
+      }
+    }
+    
+    if (countEl) {
+      const count = state.images.length;
+      countEl.textContent = `${count} image${count !== 1 ? 's' : ''}`;
     }
   }
 
@@ -144,12 +206,14 @@ const App = (() => {
             originalCanvas: canvas,
             processedCanvas: null,
             thumbnail: canvas.toDataURL('image/jpeg', 0.3),
+            settings: getDefaultImageSettings(),
           });
 
           loaded++;
           if (loaded === files.length) {
             showLoading(false);
             renderThumbnails();
+            updateImageToolbar();
             if (state.selectedIndex === -1) {
               selectImage(state.images.length - files.length);
             }
@@ -170,12 +234,13 @@ const App = (() => {
 
     state.images.forEach((img, i) => {
       const div = document.createElement('div');
-      div.className = `thumbnail relative rounded-lg overflow-hidden border-2 ${i === state.selectedIndex ? 'border-yellow-600 active' : 'border-transparent'} hover:border-yellow-500`;
+      div.className = `thumbnail relative rounded-lg overflow-hidden border-2 ${i === state.selectedIndex ? 'border-yellow-600 active' : 'border-transparent'} hover:border-yellow-500 group`;
       div.style.width = '70px';
       div.style.height = '70px';
       div.innerHTML = `
         <img src="${img.thumbnail}" class="w-full h-full object-cover" alt="Image ${i + 1}">
-        <button class="absolute top-0 right-0 bg-red-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-bl opacity-0 hover:opacity-100 transition-opacity" data-remove="${i}" title="Remove">&times;</button>
+        <span class="absolute bottom-0 left-0 bg-black bg-opacity-60 text-white text-[10px] px-1 rounded-tr">${i + 1}</span>
+        <button class="remove-btn absolute top-0 right-0 bg-red-600 hover:bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-bl opacity-0 group-hover:opacity-100 transition-opacity" data-remove="${i}" title="Remove image">&times;</button>
       `;
       div.addEventListener('click', (e) => {
         if (!e.target.dataset.remove) selectImage(i);
@@ -191,19 +256,86 @@ const App = (() => {
     });
   }
 
+  function saveCurrentImageSettings() {
+    if (state.selectedIndex >= 0 && state.selectedIndex < state.images.length) {
+      const img = state.images[state.selectedIndex];
+      img.settings = {
+        filter: state.currentFilter,
+        adjustments: { ...state.adjustments },
+        bgPreset: state.bgPreset,
+        rotation: state.rotation,
+        flipH: state.flipH,
+        flipV: state.flipV,
+      };
+    }
+  }
+
+  function loadImageSettings(index) {
+    if (index >= 0 && index < state.images.length) {
+      const img = state.images[index];
+      if (img.settings) {
+        state.currentFilter = img.settings.filter || 'none';
+        state.adjustments = { ...img.settings.adjustments } || { ...FilterEngine.DEFAULT_ADJUSTMENTS };
+        state.bgPreset = img.settings.bgPreset || 'none';
+        state.rotation = img.settings.rotation || 0;
+        state.flipH = img.settings.flipH || false;
+        state.flipV = img.settings.flipV || false;
+
+        // Update UI sliders
+        ['brightness', 'contrast', 'saturation', 'temperature', 'sharpness'].forEach(prop => {
+          const slider = document.getElementById(`slider-${prop}`);
+          const label = document.getElementById(`label-${prop}`);
+          if (slider) slider.value = state.adjustments[prop];
+          if (label) label.textContent = state.adjustments[prop];
+        });
+
+        // Update filter button UI
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('active', 'bg-gray-600');
+          b.classList.add('bg-gray-800');
+        });
+        const activeFilterBtn = document.querySelector(`[data-filter="${state.currentFilter}"]`);
+        if (activeFilterBtn) {
+          activeFilterBtn.classList.add('active', 'bg-gray-600');
+          activeFilterBtn.classList.remove('bg-gray-800');
+        }
+
+        // Update background preset UI
+        document.querySelectorAll('.bg-preset').forEach(b => {
+          b.classList.remove('border-yellow-600');
+          b.classList.add('border-gray-600');
+        });
+        const activeBgBtn = document.querySelector(`[data-bg="${state.bgPreset}"]`);
+        if (activeBgBtn) {
+          activeBgBtn.classList.add('border-yellow-600');
+          activeBgBtn.classList.remove('border-gray-600');
+        }
+      } else {
+        resetAdjustments();
+        state.currentFilter = 'none';
+        state.bgPreset = 'none';
+        state.rotation = 0;
+        state.flipH = false;
+        state.flipV = false;
+      }
+    }
+  }
+
   function selectImage(index) {
     if (index < 0 || index >= state.images.length) return;
+    
+    // Save current image settings before switching
+    saveCurrentImageSettings();
+    
     state.selectedIndex = index;
     state.bgRemoved = false;
     state.foregroundCanvas = null;
-    state.rotation = 0;
-    state.flipH = false;
-    state.flipV = false;
     state.zoom = 1;
     state.cropMode = false;
-    resetAdjustments();
-    state.currentFilter = 'none';
-    state.bgPreset = 'none';
+    
+    // Load the new image's settings
+    loadImageSettings(index);
+    
     renderThumbnails();
     updateFilterPreviews();
     updatePreview();
@@ -216,12 +348,14 @@ const App = (() => {
       state.selectedIndex = state.images.length - 1;
     }
     renderThumbnails();
+    updateImageToolbar();
     if (state.images.length > 0) {
       selectImage(state.selectedIndex);
     } else {
       state.selectedIndex = -1;
       clearPreview();
     }
+    showToast('Image removed.', 'info');
   }
 
   // --- Film Type Selector ---
@@ -262,6 +396,7 @@ const App = (() => {
         });
         btn.classList.add('active', 'bg-gray-600');
         btn.classList.remove('bg-gray-800');
+        saveCurrentImageSettings();
         updatePreview();
         saveHistory();
       });
@@ -294,6 +429,10 @@ const App = (() => {
           state.adjustments[prop] = parseInt(slider.value);
           if (label) label.textContent = slider.value;
           updatePreview();
+        });
+        // Save settings on change (mouseup/touchend for performance)
+        slider.addEventListener('change', () => {
+          saveCurrentImageSettings();
         });
       }
     });
@@ -362,6 +501,7 @@ const App = (() => {
           showToast('Background removed!', 'success');
         }
 
+        saveCurrentImageSettings();
         updatePreview();
         saveHistory();
       });
@@ -466,13 +606,29 @@ const App = (() => {
   }
 
   function getAllFramedCanvases() {
+    // Save current state
+    saveCurrentImageSettings();
     const savedIndex = state.selectedIndex;
     const savedFilter = state.currentFilter;
     const savedAdj = { ...state.adjustments };
+    const savedBgPreset = state.bgPreset;
+    const savedRotation = state.rotation;
+    const savedFlipH = state.flipH;
+    const savedFlipV = state.flipV;
 
     const framed = [];
-    state.images.forEach((_, i) => {
+    state.images.forEach((img, i) => {
+      // Load this image's settings
       state.selectedIndex = i;
+      if (img.settings) {
+        state.currentFilter = img.settings.filter || 'none';
+        state.adjustments = { ...img.settings.adjustments } || { ...FilterEngine.DEFAULT_ADJUSTMENTS };
+        state.bgPreset = img.settings.bgPreset || 'none';
+        state.rotation = img.settings.rotation || 0;
+        state.flipH = img.settings.flipH || false;
+        state.flipV = img.settings.flipV || false;
+      }
+      
       const processed = getProcessedCanvas();
       const frame = ExportEngine.drawInstaxFrame(processed, state.filmType, {
         showDust: state.showDust,
@@ -488,6 +644,10 @@ const App = (() => {
     state.selectedIndex = savedIndex;
     state.currentFilter = savedFilter;
     state.adjustments = savedAdj;
+    state.bgPreset = savedBgPreset;
+    state.rotation = savedRotation;
+    state.flipH = savedFlipH;
+    state.flipV = savedFlipV;
     return framed;
   }
 
@@ -496,14 +656,14 @@ const App = (() => {
     // Rotate
     const rotateLeftBtn = document.getElementById('rotate-left');
     const rotateRightBtn = document.getElementById('rotate-right');
-    if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => { state.rotation = (state.rotation - 90) % 360; updatePreview(); saveHistory(); });
-    if (rotateRightBtn) rotateRightBtn.addEventListener('click', () => { state.rotation = (state.rotation + 90) % 360; updatePreview(); saveHistory(); });
+    if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => { state.rotation = (state.rotation - 90) % 360; saveCurrentImageSettings(); updatePreview(); saveHistory(); });
+    if (rotateRightBtn) rotateRightBtn.addEventListener('click', () => { state.rotation = (state.rotation + 90) % 360; saveCurrentImageSettings(); updatePreview(); saveHistory(); });
 
     // Flip
     const flipHBtn = document.getElementById('flip-h');
     const flipVBtn = document.getElementById('flip-v');
-    if (flipHBtn) flipHBtn.addEventListener('click', () => { state.flipH = !state.flipH; updatePreview(); saveHistory(); });
-    if (flipVBtn) flipVBtn.addEventListener('click', () => { state.flipV = !state.flipV; updatePreview(); saveHistory(); });
+    if (flipHBtn) flipHBtn.addEventListener('click', () => { state.flipH = !state.flipH; saveCurrentImageSettings(); updatePreview(); saveHistory(); });
+    if (flipVBtn) flipVBtn.addEventListener('click', () => { state.flipV = !state.flipV; saveCurrentImageSettings(); updatePreview(); saveHistory(); });
 
     // Zoom
     const zoomInBtn = document.getElementById('zoom-in');
@@ -543,6 +703,7 @@ const App = (() => {
       });
       const noneBg = document.querySelector('[data-bg="none"]');
       if (noneBg) { noneBg.classList.add('border-yellow-600'); noneBg.classList.remove('border-gray-600'); }
+      saveCurrentImageSettings();
       updatePreview();
       saveHistory();
       showToast('All settings reset.', 'info');
@@ -579,9 +740,25 @@ const App = (() => {
     if (batchBtn) {
       batchBtn.addEventListener('click', () => {
         if (state.images.length < 2) { showToast('Need at least 2 images for batch apply.', 'warning'); return; }
-        showToast('Applying current filter to all images...', 'info');
-        // For batch, we just mark that all images will use the same filter settings during export
-        showToast('Filter will be applied to all images on export!', 'success');
+        
+        // Save current image settings first
+        saveCurrentImageSettings();
+        
+        // Copy current settings to all images
+        const currentSettings = {
+          filter: state.currentFilter,
+          adjustments: { ...state.adjustments },
+          bgPreset: state.bgPreset,
+          rotation: state.rotation,
+          flipH: state.flipH,
+          flipV: state.flipV,
+        };
+        
+        state.images.forEach((img) => {
+          img.settings = { ...currentSettings, adjustments: { ...currentSettings.adjustments } };
+        });
+        
+        showToast(`Settings applied to all ${state.images.length} images!`, 'success');
       });
     }
   }
@@ -808,6 +985,28 @@ const App = (() => {
       if (e.key === '+' || e.key === '=') { state.zoom = Math.min(3, state.zoom + 0.1); updatePreviewDisplay(); }
       if (e.key === '-') { state.zoom = Math.max(0.3, state.zoom - 0.1); updatePreviewDisplay(); }
       if (e.key === '0') { state.zoom = 1; updatePreviewDisplay(); }
+      
+      // Arrow key navigation for images
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (state.images.length > 0 && state.selectedIndex > 0) {
+          selectImage(state.selectedIndex - 1);
+        }
+      }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (state.images.length > 0 && state.selectedIndex < state.images.length - 1) {
+          selectImage(state.selectedIndex + 1);
+        }
+      }
+      
+      // Delete key to remove selected image
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (state.selectedIndex >= 0) {
+          e.preventDefault();
+          removeImage(state.selectedIndex);
+        }
+      }
     });
   }
 
@@ -1054,6 +1253,9 @@ const App = (() => {
   // --- Save / Load Project ---
   function saveProject() {
     try {
+      // Save current image settings first
+      saveCurrentImageSettings();
+      
       const projectData = {
         filmType: state.filmType,
         currentFilter: state.currentFilter,
@@ -1069,6 +1271,7 @@ const App = (() => {
         images: state.images.map(img => ({
           thumbnail: img.thumbnail,
           data: img.originalCanvas.toDataURL('image/jpeg', 0.8),
+          settings: img.settings || getDefaultImageSettings(),
         })),
       };
       localStorage.setItem('instax-studio-project', JSON.stringify(projectData));
@@ -1102,11 +1305,12 @@ const App = (() => {
 
       if (!project.images || project.images.length === 0) {
         showLoading(false);
+        updateImageToolbar();
         showToast('Project loaded (no images).', 'info');
         return;
       }
 
-      project.images.forEach((imgData) => {
+      project.images.forEach((imgData, idx) => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
@@ -1121,12 +1325,14 @@ const App = (() => {
             originalCanvas: canvas,
             processedCanvas: null,
             thumbnail: imgData.thumbnail,
+            settings: imgData.settings || getDefaultImageSettings(),
           });
 
           loaded++;
           if (loaded === project.images.length) {
             showLoading(false);
             renderThumbnails();
+            updateImageToolbar();
             selectImage(0);
             showToast('Project loaded!', 'success');
           }

@@ -254,6 +254,17 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 0 0 2px #C6A75E;
 }
 
+/* Remove button on thumbnails - visible on hover via Tailwind group */
+.thumbnail .remove-btn {
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.thumbnail:hover .remove-btn {
+  opacity: 1;
+}
+
 /* Filter Preset Button */
 .filter-btn {
   transition: all 0.3s ease;

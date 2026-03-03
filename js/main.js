@@ -79,7 +79,18 @@ const App = (() => {
     const dateInput = document.getElementById('date-input');
     if (dateInput) dateInput.value = state.dateText;
 
-    showToast('Welcome to Instax Studio Pro! Upload an image to get started.', 'info');
+    // Welcome message
+    setTimeout(() => {
+      showToast('Welcome to Instax Studio Pro! 📷 Upload an image to get started.', 'info');
+    }, 500);
+    
+    // Add keyboard shortcut hints
+    document.querySelectorAll('[title]').forEach(el => {
+      // Add aria descriptions for accessibility
+      if (!el.getAttribute('aria-label')) {
+        el.setAttribute('aria-label', el.title);
+      }
+    });
   }
 
   // --- Upload Area ---
@@ -96,6 +107,14 @@ const App = (() => {
 
     if (dropZone) {
       dropZone.addEventListener('click', () => fileInput.click());
+
+      // Keyboard accessibility
+      dropZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
 
       dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -182,8 +201,12 @@ const App = (() => {
       showToast('Some files were skipped (unsupported format).', 'warning');
     }
 
-    showLoading(true);
+    showLoading(true, `Loading ${files.length} image${files.length > 1 ? 's' : ''}...`);
     let loaded = 0;
+
+    // Add upload animation to drop zone
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) dropZone.classList.add('upload-success');
 
     files.forEach((file) => {
       const reader = new FileReader();
@@ -223,7 +246,13 @@ const App = (() => {
             if (state.selectedIndex === -1) {
               selectImage(state.images.length - files.length);
             }
-            showToast(`${files.length} image(s) uploaded successfully!`, 'success');
+            showToast(`${files.length} image${files.length > 1 ? 's' : ''} uploaded successfully! 🎉`, 'success');
+            
+            // Remove upload animation
+            const dropZone = document.getElementById('drop-zone');
+            if (dropZone) {
+              setTimeout(() => dropZone.classList.remove('upload-success'), 600);
+            }
           }
         };
         img.src = e.target.result;
@@ -664,8 +693,12 @@ const App = (() => {
         const framed = getFramedCanvas();
         if (!framed) return;
         playShutterSound();
-        ExportEngine.exportImage(framed, 'jpg', state.imageQuality / 100);
-        showToast('Image exported as JPG!', 'success');
+        showLoading(true, 'Preparing your JPG export...');
+        setTimeout(() => {
+          ExportEngine.exportImage(framed, 'jpg', state.imageQuality / 100);
+          showLoading(false);
+          showToast('📸 Image exported as JPG! Check your downloads.', 'success');
+        }, 300);
       });
     }
 
@@ -676,8 +709,12 @@ const App = (() => {
         const framed = getFramedCanvas();
         if (!framed) return;
         playShutterSound();
-        ExportEngine.exportImage(framed, 'png');
-        showToast('Image exported as PNG!', 'success');
+        showLoading(true, 'Preparing your PNG export...');
+        setTimeout(() => {
+          ExportEngine.exportImage(framed, 'png');
+          showLoading(false);
+          showToast('🖼️ Image exported as PNG! Check your downloads.', 'success');
+        }, 300);
       });
     }
 
@@ -688,8 +725,12 @@ const App = (() => {
         const framed = getAllFramedCanvases();
         if (framed.length === 0) return;
         playShutterSound();
-        ExportEngine.exportPDF(framed, state.filmType);
-        showToast('PDF exported!', 'success');
+        showLoading(true, `Creating PDF with ${framed.length} image${framed.length > 1 ? 's' : ''}...`);
+        setTimeout(() => {
+          ExportEngine.exportPDF(framed, state.filmType);
+          showLoading(false);
+          showToast('📄 PDF exported successfully!', 'success');
+        }, 300);
       });
     }
 
@@ -700,11 +741,18 @@ const App = (() => {
         const framed = getAllFramedCanvases();
         if (framed.length === 0) return;
         playShutterSound();
-        const collage = ExportEngine.createCollage(framed);
-        if (collage) {
-          ExportEngine.exportImage(collage, 'jpg', state.imageQuality / 100);
-          showToast('Collage exported!', 'success');
-        }
+        showLoading(true, 'Creating your photo collage...');
+        setTimeout(() => {
+          const collage = ExportEngine.createCollage(framed);
+          if (collage) {
+            ExportEngine.exportImage(collage, 'jpg', state.imageQuality / 100);
+            showLoading(false);
+            showToast(`🎞️ Collage with ${framed.length} photos exported!`, 'success');
+          } else {
+            showLoading(false);
+            showToast('Failed to create collage.', 'error');
+          }
+        }, 300);
       });
     }
 
@@ -1212,6 +1260,12 @@ const App = (() => {
       emptyState.classList.add('hidden');
       emptyState.style.display = 'none';
     }
+    
+    // Update preview hint
+    const previewHint = document.getElementById('preview-hint');
+    if (previewHint) {
+      previewHint.textContent = `Image ${state.selectedIndex + 1} of ${state.images.length} • Use toolbar to edit`;
+    }
 
     const processed = getProcessedCanvas();
     if (!processed) return;
@@ -1339,7 +1393,20 @@ const App = (() => {
       emptyState.style.display = 'flex';
     }
     const frameContainer = document.getElementById('frame-preview');
-    if (frameContainer) frameContainer.innerHTML = '<p class="text-gray-500 text-sm">No image selected</p>';
+    if (frameContainer) {
+      frameContainer.innerHTML = `
+        <div class="text-center text-gray-500">
+          <div class="text-3xl mb-2">🎞️</div>
+          <p class="text-sm">No image selected</p>
+          <p class="text-xs text-gray-600 mt-1">Your framed photo will appear here</p>
+        </div>
+      `;
+    }
+    // Update preview hint
+    const previewHint = document.getElementById('preview-hint');
+    if (previewHint) {
+      previewHint.textContent = 'Upload an image to start editing';
+    }
   }
 
   // --- Undo / Redo ---
@@ -1405,6 +1472,8 @@ const App = (() => {
       // Save current image settings first
       saveCurrentImageSettings();
       
+      showLoading(true, 'Saving your project...');
+      
       const projectData = {
         filmType: state.filmType,
         currentFilter: state.currentFilter,
@@ -1424,16 +1493,21 @@ const App = (() => {
         })),
       };
       localStorage.setItem('instax-studio-project', JSON.stringify(projectData));
-      showToast('Project saved to local storage!', 'success');
+      
+      setTimeout(() => {
+        showLoading(false);
+        showToast(`💾 Project saved! (${state.images.length} image${state.images.length !== 1 ? 's' : ''})`, 'success');
+      }, 300);
     } catch (e) {
-      showToast('Failed to save project (storage full?)', 'error');
+      showLoading(false);
+      showToast('Failed to save project. Storage might be full.', 'error');
     }
   }
 
   function loadProject() {
     try {
       const data = localStorage.getItem('instax-studio-project');
-      if (!data) { showToast('No saved project found.', 'warning'); return; }
+      if (!data) { showToast('No saved project found. Start by uploading images!', 'warning'); return; }
 
       const project = JSON.parse(data);
       state.filmType = project.filmType || 'mini';
@@ -1448,16 +1522,15 @@ const App = (() => {
       state.imageQuality = project.imageQuality || 92;
       state.printDPI = project.printDPI || 300;
 
-      showLoading(true);
-      let loaded = 0;
-      state.images = [];
-
       if (!project.images || project.images.length === 0) {
-        showLoading(false);
         updateImageToolbar();
-        showToast('Project loaded (no images).', 'info');
+        showToast('Project loaded but it contains no images.', 'info');
         return;
       }
+
+      showLoading(true, `Loading ${project.images.length} image${project.images.length > 1 ? 's' : ''} from project...`);
+      let loaded = 0;
+      state.images = [];
 
       project.images.forEach((imgData, idx) => {
         const img = new Image();
@@ -1483,7 +1556,7 @@ const App = (() => {
             renderThumbnails();
             updateImageToolbar();
             selectImage(0);
-            showToast('Project loaded!', 'success');
+            showToast(`📂 Project loaded! ${loaded} image${loaded > 1 ? 's' : ''} restored.`, 'success');
           }
         };
         img.src = imgData.data;
@@ -1536,15 +1609,18 @@ const App = (() => {
 })();
 
 // --- Global Toast Notification ---
+const TOAST_DISPLAY_DURATION = 4000;  // How long toast is visible
+const TOAST_EXIT_ANIMATION_DURATION = 300;  // Must match CSS animation
+
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
   const colors = {
-    info: 'bg-blue-600',
-    success: 'bg-green-600',
-    warning: 'bg-yellow-600',
-    error: 'bg-red-600',
+    info: 'bg-blue-600 border-blue-500',
+    success: 'bg-green-600 border-green-500',
+    warning: 'bg-yellow-600 border-yellow-500',
+    error: 'bg-red-600 border-red-500',
   };
   const icons = {
     info: 'ℹ️',
@@ -1554,22 +1630,43 @@ function showToast(message, type = 'info') {
   };
 
   const toast = document.createElement('div');
-  toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm max-w-sm`;
-  toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+  toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm max-w-sm border-l-4`;
+  toast.setAttribute('role', 'alert');
+  toast.innerHTML = `
+    <span class="text-lg">${icons[type]}</span>
+    <span class="flex-1">${message}</span>
+    <button type="button" class="text-white opacity-60 hover:opacity-100 ml-2" aria-label="Dismiss">&times;</button>
+  `;
+  
+  // Add click to dismiss
+  const dismissBtn = toast.querySelector('button');
+  dismissBtn.addEventListener('click', () => {
+    toast.classList.add('toast-exit');
+    setTimeout(() => toast.remove(), TOAST_EXIT_ANIMATION_DURATION);
+  });
+  
   container.appendChild(toast);
 
   setTimeout(() => {
-    toast.classList.add('toast-exit');
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+    if (toast.parentNode) {
+      toast.classList.add('toast-exit');
+      setTimeout(() => toast.remove(), TOAST_EXIT_ANIMATION_DURATION);
+    }
+  }, TOAST_DISPLAY_DURATION);
 }
 
 // --- Global Loading Spinner ---
-function showLoading(show) {
+function showLoading(show, message = 'Processing your image...') {
   const loader = document.getElementById('loading-overlay');
   if (loader) {
     loader.classList.toggle('hidden', !show);
     loader.style.display = show ? 'flex' : 'none';
+    
+    // Update message if showing
+    if (show) {
+      const msgEl = loader.querySelector('p:first-of-type');
+      if (msgEl) msgEl.textContent = message;
+    }
   }
 }
 

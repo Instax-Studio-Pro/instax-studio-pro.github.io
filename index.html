@@ -164,6 +164,48 @@
           </div>
         </section>
 
+        <!-- Image Fit Mode -->
+        <section class="glass rounded-xl p-4">
+          <h2 class="text-sm font-semibold text-gold mb-3 flex items-center gap-2">
+            <span>🖼️</span> Image Fit
+          </h2>
+          <p class="text-xs text-gray-400 mb-2">Choose how your image fits in the frame</p>
+          <div class="flex gap-2 mb-3">
+            <button type="button" id="frame-fit-btn" class="flex-1 py-2 px-3 rounded-lg bg-yellow-700 text-white text-xs font-medium transition-colors hover:bg-yellow-600" title="Fit: Preserve aspect ratio, may show borders">
+              📐 Fit<br><span class="text-[10px] opacity-70">Keep proportions</span>
+            </button>
+            <button type="button" id="frame-fill-btn" class="flex-1 py-2 px-3 rounded-lg bg-gray-700 text-white text-xs font-medium transition-colors hover:bg-gray-600" title="Fill: Crop to fill frame">
+              🔲 Fill<br><span class="text-[10px] opacity-70">Auto-crop to fit</span>
+            </button>
+          </div>
+          <!-- Crop Position Controls (visible only in Fill mode) -->
+          <div id="crop-position-container" style="display: none;">
+            <p class="text-xs text-gray-400 mb-2">Adjust crop position</p>
+            <div class="space-y-2">
+              <!-- Horizontal Position -->
+              <div>
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                  <span>Horizontal</span>
+                  <span id="label-crop-pos-x">50%</span>
+                </div>
+                <input type="range" id="crop-pos-x" min="0" max="100" value="50" class="w-full">
+              </div>
+              <!-- Vertical Position -->
+              <div>
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                  <span>Vertical</span>
+                  <span id="label-crop-pos-y">50%</span>
+                </div>
+                <input type="range" id="crop-pos-y" min="0" max="100" value="50" class="w-full">
+              </div>
+              <!-- Reset Button -->
+              <button type="button" id="reset-crop-pos-btn" class="w-full py-1.5 px-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs font-medium transition-colors">
+                ↩️ Reset to Center
+              </button>
+            </div>
+          </div>
+        </section>
+
         <!-- Filter Presets -->
         <section class="glass rounded-xl p-4">
           <button type="button" data-collapse="filter-content" class="w-full text-sm font-semibold text-gold mb-3 flex items-center justify-between">

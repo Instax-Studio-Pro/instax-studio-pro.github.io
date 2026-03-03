@@ -17,9 +17,19 @@ const ExportEngine = (() => {
 
   /**
    * Draw an Instax frame around an image on a canvas
+   * @param {HTMLCanvasElement} canvas - Source image canvas
+   * @param {string} filmType - Type of film (mini, square, wide)
+   * @param {Object} options - Drawing options
+   * @param {boolean} options.showDust - Show film dust overlay
+   * @param {boolean} options.showDate - Show date stamp
+   * @param {string} options.dateText - Date text to display
+   * @param {boolean} options.caption - Show caption
+   * @param {string} options.captionText - Caption text to display
+   * @param {string} options.cropMode - 'fit' (default) or 'fill' for auto-crop
+   * @param {Object} options.cropPosition - {x: 0-1, y: 0-1} for crop position when fill mode
    */
   function drawInstaxFrame(canvas, filmType, options = {}) {
-    const { showDust, showDate, dateText, caption, captionText } = options;
+    const { showDust, showDate, dateText, caption, captionText, cropMode = 'fit', cropPosition = { x: 0.5, y: 0.5 } } = options;
     const size = FILM_SIZES[filmType];
     const scale = 8; // px per mm for high-res export
     const frameW = size.filmW * scale;
@@ -52,8 +62,58 @@ const ExportEngine = (() => {
       imgY = (frameH - imgH) / 2 - (filmType === 'wide' ? 0 : 2 * scale);
     }
 
-    // Draw the processed image
-    ctx.drawImage(canvas, imgX, imgY, imgW, imgH);
+    // Calculate source and destination dimensions preserving aspect ratio
+    const srcW = canvas.width;
+    const srcH = canvas.height;
+    const srcRatio = srcW / srcH;
+    const frameRatio = imgW / imgH;
+
+    let drawX = imgX;
+    let drawY = imgY;
+    let drawW = imgW;
+    let drawH = imgH;
+    let srcX = 0;
+    let srcY = 0;
+    let srcDrawW = srcW;
+    let srcDrawH = srcH;
+
+    if (cropMode === 'fill') {
+      // Fill mode: image fills the entire frame area, cropping as needed
+      if (srcRatio > frameRatio) {
+        // Image is wider than frame - crop horizontally
+        srcDrawW = srcH * frameRatio;
+        srcDrawH = srcH;
+        // Use cropPosition.x to determine horizontal crop position (0 = left, 0.5 = center, 1 = right)
+        srcX = (srcW - srcDrawW) * cropPosition.x;
+        srcY = 0;
+      } else {
+        // Image is taller than frame - crop vertically
+        srcDrawW = srcW;
+        srcDrawH = srcW / frameRatio;
+        // Use cropPosition.y to determine vertical crop position (0 = top, 0.5 = center, 1 = bottom)
+        srcX = 0;
+        srcY = (srcH - srcDrawH) * cropPosition.y;
+      }
+      // Draw the cropped image to fill the frame
+      ctx.drawImage(canvas, srcX, srcY, srcDrawW, srcDrawH, imgX, imgY, imgW, imgH);
+    } else {
+      // Fit mode (default): image fits within frame, preserving aspect ratio
+      if (srcRatio > frameRatio) {
+        // Image is wider than frame - fit to width
+        drawW = imgW;
+        drawH = imgW / srcRatio;
+        drawX = imgX;
+        drawY = imgY + (imgH - drawH) / 2;
+      } else {
+        // Image is taller than frame - fit to height
+        drawH = imgH;
+        drawW = imgH * srcRatio;
+        drawX = imgX + (imgW - drawW) / 2;
+        drawY = imgY;
+      }
+      // Draw the image preserving aspect ratio
+      ctx.drawImage(canvas, drawX, drawY, drawW, drawH);
+    }
 
     // Film dust overlay
     if (showDust) {

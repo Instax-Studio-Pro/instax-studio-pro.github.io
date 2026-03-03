@@ -35,6 +35,9 @@ const App = (() => {
     cropMode: false,
     cropRect: null,
     beforeAfterMode: false,
+    // Frame crop settings
+    frameCropMode: 'fit',        // 'fit' or 'fill' - determines how image fits in frame
+    cropPosition: { x: 0.5, y: 0.5 },  // Position for crop when in 'fill' mode (0-1 range)
   };
 
   // Default per-image settings
@@ -46,6 +49,8 @@ const App = (() => {
       rotation: 0,
       flipH: false,
       flipV: false,
+      frameCropMode: 'fit',
+      cropPosition: { x: 0.5, y: 0.5 },
     };
   }
 
@@ -67,6 +72,7 @@ const App = (() => {
     setupMiscFeatures();
     setupKeyboardShortcuts();
     setupMobileUI();
+    setupFrameCropMode();
 
     // Set default date
     state.dateText = formatDate(new Date());
@@ -266,6 +272,8 @@ const App = (() => {
         rotation: state.rotation,
         flipH: state.flipH,
         flipV: state.flipV,
+        frameCropMode: state.frameCropMode,
+        cropPosition: { ...state.cropPosition },
       };
     }
   }
@@ -280,6 +288,8 @@ const App = (() => {
         state.rotation = img.settings.rotation || 0;
         state.flipH = img.settings.flipH || false;
         state.flipV = img.settings.flipV || false;
+        state.frameCropMode = img.settings.frameCropMode || 'fit';
+        state.cropPosition = img.settings.cropPosition ? { ...img.settings.cropPosition } : { x: 0.5, y: 0.5 };
 
         // Update UI sliders
         ['brightness', 'contrast', 'saturation', 'temperature', 'sharpness'].forEach(prop => {
@@ -310,6 +320,9 @@ const App = (() => {
           activeBgBtn.classList.add('border-yellow-600');
           activeBgBtn.classList.remove('border-gray-600');
         }
+
+        // Update frame crop mode UI
+        updateFrameCropModeUI();
       } else {
         resetAdjustments();
         state.currentFilter = 'none';
@@ -317,6 +330,9 @@ const App = (() => {
         state.rotation = 0;
         state.flipH = false;
         state.flipV = false;
+        state.frameCropMode = 'fit';
+        state.cropPosition = { x: 0.5, y: 0.5 };
+        updateFrameCropModeUI();
       }
     }
   }
@@ -456,6 +472,118 @@ const App = (() => {
       if (slider) slider.value = 0;
       if (label) label.textContent = '0';
     });
+  }
+
+  // --- Frame Crop Mode (Fit/Fill) ---
+  function setupFrameCropMode() {
+    const fitBtn = document.getElementById('frame-fit-btn');
+    const fillBtn = document.getElementById('frame-fill-btn');
+    const cropPosContainer = document.getElementById('crop-position-container');
+
+    if (fitBtn) {
+      fitBtn.addEventListener('click', () => {
+        state.frameCropMode = 'fit';
+        updateFrameCropModeUI();
+        saveCurrentImageSettings();
+        updatePreview();
+        saveHistory();
+      });
+    }
+
+    if (fillBtn) {
+      fillBtn.addEventListener('click', () => {
+        state.frameCropMode = 'fill';
+        updateFrameCropModeUI();
+        saveCurrentImageSettings();
+        updatePreview();
+        saveHistory();
+      });
+    }
+
+    // Crop position sliders
+    const cropPosX = document.getElementById('crop-pos-x');
+    const cropPosY = document.getElementById('crop-pos-y');
+    const labelCropPosX = document.getElementById('label-crop-pos-x');
+    const labelCropPosY = document.getElementById('label-crop-pos-y');
+
+    if (cropPosX) {
+      cropPosX.addEventListener('input', () => {
+        state.cropPosition.x = parseInt(cropPosX.value) / 100;
+        if (labelCropPosX) labelCropPosX.textContent = cropPosX.value + '%';
+        updatePreview();
+      });
+      cropPosX.addEventListener('change', () => {
+        saveCurrentImageSettings();
+      });
+    }
+
+    if (cropPosY) {
+      cropPosY.addEventListener('input', () => {
+        state.cropPosition.y = parseInt(cropPosY.value) / 100;
+        if (labelCropPosY) labelCropPosY.textContent = cropPosY.value + '%';
+        updatePreview();
+      });
+      cropPosY.addEventListener('change', () => {
+        saveCurrentImageSettings();
+      });
+    }
+
+    // Reset crop position button
+    const resetCropPosBtn = document.getElementById('reset-crop-pos-btn');
+    if (resetCropPosBtn) {
+      resetCropPosBtn.addEventListener('click', () => {
+        state.cropPosition = { x: 0.5, y: 0.5 };
+        if (cropPosX) cropPosX.value = 50;
+        if (cropPosY) cropPosY.value = 50;
+        if (labelCropPosX) labelCropPosX.textContent = '50%';
+        if (labelCropPosY) labelCropPosY.textContent = '50%';
+        saveCurrentImageSettings();
+        updatePreview();
+      });
+    }
+  }
+
+  function updateFrameCropModeUI() {
+    const fitBtn = document.getElementById('frame-fit-btn');
+    const fillBtn = document.getElementById('frame-fill-btn');
+    const cropPosContainer = document.getElementById('crop-position-container');
+    const cropPosX = document.getElementById('crop-pos-x');
+    const cropPosY = document.getElementById('crop-pos-y');
+    const labelCropPosX = document.getElementById('label-crop-pos-x');
+    const labelCropPosY = document.getElementById('label-crop-pos-y');
+
+    if (fitBtn && fillBtn) {
+      if (state.frameCropMode === 'fit') {
+        fitBtn.classList.add('bg-yellow-700');
+        fitBtn.classList.remove('bg-gray-700');
+        fillBtn.classList.remove('bg-yellow-700');
+        fillBtn.classList.add('bg-gray-700');
+      } else {
+        fillBtn.classList.add('bg-yellow-700');
+        fillBtn.classList.remove('bg-gray-700');
+        fitBtn.classList.remove('bg-yellow-700');
+        fitBtn.classList.add('bg-gray-700');
+      }
+    }
+
+    // Show/hide crop position controls based on mode
+    if (cropPosContainer) {
+      cropPosContainer.style.display = state.frameCropMode === 'fill' ? 'block' : 'none';
+    }
+
+    // Update crop position sliders
+    if (cropPosX) {
+      cropPosX.value = Math.round(state.cropPosition.x * 100);
+    }
+    if (cropPosY) {
+      cropPosY.value = Math.round(state.cropPosition.y * 100);
+    }
+    if (labelCropPosX) {
+      labelCropPosX.textContent = Math.round(state.cropPosition.x * 100) + '%';
+    }
+    if (labelCropPosY) {
+      labelCropPosY.textContent = Math.round(state.cropPosition.y * 100) + '%';
+    }
   }
 
   // --- Background Presets ---
@@ -602,6 +730,8 @@ const App = (() => {
       dateText: state.dateText,
       caption: state.showCaption,
       captionText: state.captionText,
+      cropMode: state.frameCropMode,
+      cropPosition: state.cropPosition,
     });
   }
 
@@ -615,6 +745,8 @@ const App = (() => {
     const savedRotation = state.rotation;
     const savedFlipH = state.flipH;
     const savedFlipV = state.flipV;
+    const savedFrameCropMode = state.frameCropMode;
+    const savedCropPosition = { ...state.cropPosition };
 
     const framed = [];
     state.images.forEach((img, i) => {
@@ -627,6 +759,8 @@ const App = (() => {
         state.rotation = img.settings.rotation || 0;
         state.flipH = img.settings.flipH || false;
         state.flipV = img.settings.flipV || false;
+        state.frameCropMode = img.settings.frameCropMode || 'fit';
+        state.cropPosition = img.settings.cropPosition ? { ...img.settings.cropPosition } : { x: 0.5, y: 0.5 };
       }
       
       const processed = getProcessedCanvas();
@@ -636,6 +770,8 @@ const App = (() => {
         dateText: state.dateText,
         caption: state.showCaption,
         captionText: state.captionText,
+        cropMode: state.frameCropMode,
+        cropPosition: state.cropPosition,
       });
       framed.push(frame);
     });
@@ -648,6 +784,8 @@ const App = (() => {
     state.rotation = savedRotation;
     state.flipH = savedFlipH;
     state.flipV = savedFlipV;
+    state.frameCropMode = savedFrameCropMode;
+    state.cropPosition = savedCropPosition;
     return framed;
   }
 
@@ -691,6 +829,8 @@ const App = (() => {
       state.flipH = false;
       state.flipV = false;
       state.zoom = 1;
+      state.frameCropMode = 'fit';
+      state.cropPosition = { x: 0.5, y: 0.5 };
       document.querySelectorAll('.filter-btn').forEach(b => {
         b.classList.remove('active', 'bg-gray-600');
         b.classList.add('bg-gray-800');
@@ -703,6 +843,7 @@ const App = (() => {
       });
       const noneBg = document.querySelector('[data-bg="none"]');
       if (noneBg) { noneBg.classList.add('border-yellow-600'); noneBg.classList.remove('border-gray-600'); }
+      updateFrameCropModeUI();
       saveCurrentImageSettings();
       updatePreview();
       saveHistory();
@@ -752,10 +893,12 @@ const App = (() => {
           rotation: state.rotation,
           flipH: state.flipH,
           flipV: state.flipV,
+          frameCropMode: state.frameCropMode,
+          cropPosition: { ...state.cropPosition },
         };
         
         state.images.forEach((img) => {
-          img.settings = { ...currentSettings, adjustments: { ...currentSettings.adjustments } };
+          img.settings = { ...currentSettings, adjustments: { ...currentSettings.adjustments }, cropPosition: { ...currentSettings.cropPosition } };
         });
         
         showToast(`Settings applied to all ${state.images.length} images!`, 'success');
@@ -1208,6 +1351,8 @@ const App = (() => {
       rotation: state.rotation,
       flipH: state.flipH,
       flipV: state.flipV,
+      frameCropMode: state.frameCropMode,
+      cropPosition: { ...state.cropPosition },
     };
     // Remove future states
     state.history = state.history.slice(0, state.historyIndex + 1);
@@ -1238,6 +1383,8 @@ const App = (() => {
     state.rotation = snapshot.rotation;
     state.flipH = snapshot.flipH;
     state.flipV = snapshot.flipV;
+    state.frameCropMode = snapshot.frameCropMode || 'fit';
+    state.cropPosition = snapshot.cropPosition ? { ...snapshot.cropPosition } : { x: 0.5, y: 0.5 };
 
     // Update UI
     ['brightness', 'contrast', 'saturation', 'temperature', 'sharpness'].forEach(prop => {
@@ -1247,6 +1394,7 @@ const App = (() => {
       if (label) label.textContent = state.adjustments[prop];
     });
 
+    updateFrameCropModeUI();
     updatePreview();
   }
 

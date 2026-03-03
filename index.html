@@ -4,28 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instax Studio Pro – Web Based Instant Photo Print Designer</title>
-  <meta name="description" content="Professional web-based instant photo print designer with Instax-style filters, frames, and export options. Create stunning instant-style photos online.">
-  <meta name="keywords" content="instax, photo editor, instant photo, polaroid style, photo filters, print designer, photo frames">
+  <meta name="description" content="Professional web-based instant photo print designer with Instax-style filters, frames, and export options. Create stunning instant-style photos online for free.">
+  <meta name="keywords" content="instax, photo editor, instant photo, polaroid style, photo filters, print designer, photo frames, instax mini, instax square, instax wide, online photo editor, free photo editor">
   <meta name="author" content="Instax Studio Pro">
-  <meta name="robots" content="index, follow">
-  
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="application-name" content="Instax Studio Pro">
+  <link rel="canonical" href="https://instax-studio-pro.github.io/">
+
+  <!-- Favicon & App Icons -->
+  <link rel="icon" type="image/webp" href="https://res.cloudinary.com/dkj22lm1g/image/upload/v1772511048/Instax_Studio_Pro_wrjzqa.webp">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/dkj22lm1g/image/upload/w_180,h_180,c_fill/v1772511048/Instax_Studio_Pro_wrjzqa.webp">
+  <meta name="msapplication-TileImage" content="https://res.cloudinary.com/dkj22lm1g/image/upload/w_144,h_144,c_fill/v1772511048/Instax_Studio_Pro_wrjzqa.webp">
+
+  <!-- Preconnect & Preload -->
+  <link rel="preconnect" href="https://res.cloudinary.com">
+  <link rel="preload" as="image" href="https://res.cloudinary.com/dkj22lm1g/image/upload/v1772511048/Instax_Studio_Pro_wrjzqa.webp" fetchpriority="high">
+
   <!-- Open Graph / Social Media Meta Tags -->
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://instax-studio-pro.github.io/">
   <meta property="og:title" content="Instax Studio Pro – Web Based Instant Photo Print Designer">
-  <meta property="og:description" content="Create stunning instant-style photos with professional filters, frames, and export options.">
+  <meta property="og:description" content="Create stunning instant-style photos with professional filters, frames, and export options. Free online Instax photo designer.">
   <meta property="og:site_name" content="Instax Studio Pro">
-  
+  <meta property="og:image" content="https://res.cloudinary.com/dkj22lm1g/image/upload/v1772511048/Instax_Studio_Pro_wrjzqa.webp">
+  <meta property="og:image:alt" content="Instax Studio Pro – Web Based Instant Photo Print Designer">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Instax Studio Pro – Photo Designer">
-  <meta name="twitter:description" content="Professional web-based instant photo print designer">
-  
+  <meta name="twitter:description" content="Professional web-based instant photo print designer with Instax-style filters, frames, and export options.">
+  <meta name="twitter:image" content="https://res.cloudinary.com/dkj22lm1g/image/upload/v1772511048/Instax_Studio_Pro_wrjzqa.webp">
+  <meta name="twitter:image:alt" content="Instax Studio Pro Logo">
+
   <!-- Theme Color for Mobile Browsers -->
   <meta name="theme-color" content="#111827">
   <meta name="msapplication-TileColor" content="#111827">
-  
+
   <!-- Prevent phone number detection -->
   <meta name="format-detection" content="telephone=no">
+
+  <!-- JSON-LD Structured Data for SEO & GenAI -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Instax Studio Pro",
+    "url": "https://instax-studio-pro.github.io/",
+    "description": "Professional web-based instant photo print designer with Instax-style filters, frames, and export options. Create stunning instant-style photos online for free.",
+    "applicationCategory": "PhotoApplication",
+    "operatingSystem": "Web",
+    "browserRequirements": "Requires JavaScript",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "image": "https://res.cloudinary.com/dkj22lm1g/image/upload/v1772511048/Instax_Studio_Pro_wrjzqa.webp",
+    "logo": "https://res.cloudinary.com/dkj22lm1g/image/upload/v1772511048/Instax_Studio_Pro_wrjzqa.webp",
+    "featureList": [
+      "Instax Mini, Square, and Wide film formats",
+      "Professional photo filters and presets",
+      "Brightness, contrast, saturation, temperature, and sharpness adjustments",
+      "Custom backgrounds and frames",
+      "Film dust overlay and date stamp",
+      "Export as JPG, PNG, or PDF",
+      "Batch photo processing",
+      "Print-ready 300 DPI export"
+    ],
+    "author": {
+      "@type": "Organization",
+      "name": "Instax Studio Pro",
+      "url": "https://instax-studio-pro.github.io/"
+    }
+  }
+  </script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -84,8 +139,8 @@
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <!-- Logo -->
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gold rounded-lg flex items-center justify-center text-charcoal font-bold text-lg shadow-lg">
-          📷
+        <div class="w-10 h-10 rounded-lg overflow-hidden shadow-lg flex-shrink-0">
+          <img src="https://res.cloudinary.com/dkj22lm1g/image/upload/w_40,h_40,c_fill/v1772511048/Instax_Studio_Pro_wrjzqa.webp" alt="Instax Studio Pro Logo" width="40" height="40" class="w-full h-full object-cover">
         </div>
         <div>
           <h1 class="text-xl font-bold text-cream tracking-wide">Instax Studio <span class="text-gold">Pro</span></h1>

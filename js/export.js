@@ -112,7 +112,7 @@ const ExportEngine = (() => {
         drawY = imgY;
       }
       // Draw the image preserving aspect ratio
-      ctx.drawImage(canvas, drawX, drawY, drawW, drawH);
+      ctx.drawImage(canvas, 0, 0, srcW, srcH, drawX, drawY, drawW, drawH);
     }
 
     // Film dust overlay

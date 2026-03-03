@@ -1304,6 +1304,8 @@ const App = (() => {
       dateText: state.dateText,
       caption: state.showCaption,
       captionText: state.captionText,
+      cropMode: state.frameCropMode,
+      cropPosition: state.cropPosition,
     });
 
     // Display framed version

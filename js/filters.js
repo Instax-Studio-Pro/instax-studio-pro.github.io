@@ -232,7 +232,7 @@ const FilterEngine = (() => {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = width;
       tempCanvas.height = height;
-      const tempCtx = tempCanvas.getContext('2d');
+      const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
       tempCtx.filter = `blur(${1 + sharpness / 30}px)`;
       tempCtx.drawImage(ctx.canvas, 0, 0);
       tempCtx.filter = 'none';
@@ -265,7 +265,7 @@ const FilterEngine = (() => {
       const outputCanvas = document.createElement('canvas');
       outputCanvas.width = width;
       outputCanvas.height = height;
-      const ctx = outputCanvas.getContext('2d');
+      const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
 
       // Draw source image
       ctx.drawImage(sourceCanvas, 0, 0);
@@ -298,7 +298,7 @@ const FilterEngine = (() => {
       const preview = document.createElement('canvas');
       preview.width = size;
       preview.height = size;
-      const ctx = preview.getContext('2d');
+      const ctx = preview.getContext('2d', { willReadFrequently: true });
 
       // Draw scaled source
       const srcRatio = sourceCanvas.width / sourceCanvas.height;

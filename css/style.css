@@ -522,3 +522,144 @@ section.glass h2 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========== Light Mode Theme ========== */
+body.light-mode {
+  background: linear-gradient(135deg, #fdf6e3 0%, #f5f0e8 25%, #ede8da 50%, #f5f0e8 75%, #fdf6e3 100%) !important;
+  color: #111827 !important;
+}
+
+body.light-mode .studio-gradient {
+  background: linear-gradient(135deg, #fdf6e3 0%, #f5f0e8 25%, #ede8da 50%, #f5f0e8 75%, #fdf6e3 100%) !important;
+}
+
+body.light-mode .glass {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(198, 167, 94, 0.3) !important;
+}
+
+/* Background overrides */
+body.light-mode .bg-charcoal,
+body.light-mode .bg-gray-900 {
+  background-color: #f3f4f6 !important;
+}
+
+body.light-mode .bg-gray-800 {
+  background-color: #e5e7eb !important;
+}
+
+body.light-mode .bg-gray-700 {
+  background-color: #d1d5db !important;
+}
+
+/* Text overrides */
+body.light-mode .text-white {
+  color: #111827 !important;
+}
+
+body.light-mode .text-cream {
+  color: #1a1a1a !important;
+}
+
+body.light-mode .text-gray-400 {
+  color: #4b5563 !important;
+}
+
+body.light-mode .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+body.light-mode .text-gray-300 {
+  color: #374151 !important;
+}
+
+body.light-mode .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+/* Border overrides */
+body.light-mode .border-gray-800 {
+  border-color: #d1d5db !important;
+}
+
+body.light-mode .border-gray-700 {
+  border-color: #e5e7eb !important;
+}
+
+/* Input and select fields */
+body.light-mode input[type="text"],
+body.light-mode select {
+  background-color: #e5e7eb !important;
+  color: #111827 !important;
+  border-color: rgba(198, 167, 94, 0.4) !important;
+}
+
+/* Hover state overrides */
+body.light-mode .hover\:bg-gray-700:hover {
+  background-color: #c8cdd5 !important;
+}
+
+body.light-mode .hover\:bg-gray-600:hover {
+  background-color: #d1d5db !important;
+}
+
+/* Red/danger buttons stay visible */
+body.light-mode .bg-red-800 {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+body.light-mode .bg-red-900 {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+body.light-mode .hover\:bg-red-700:hover {
+  background-color: #dc2626 !important;
+}
+
+body.light-mode .hover\:bg-red-800:hover {
+  background-color: #b91c1c !important;
+}
+
+/* Footer */
+body.light-mode footer {
+  border-color: #d1d5db !important;
+  color: #6b7280 !important;
+}
+
+/* Drop zone */
+body.light-mode .drop-zone {
+  border-color: rgba(198, 167, 94, 0.5) !important;
+}
+
+/* Scrollbar */
+body.light-mode ::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+/* Separator dividers */
+body.light-mode .bg-gray-600 {
+  background-color: #9ca3af !important;
+}
+
+/* Yellow/active film type buttons keep their color */
+body.light-mode .bg-yellow-700 {
+  background-color: #b45309 !important;
+  color: #ffffff !important;
+}
+
+body.light-mode .hover\:bg-yellow-600:hover {
+  background-color: #d97706 !important;
+}
+
+/* Preview containers */
+body.light-mode #preview-container,
+body.light-mode #frame-preview {
+  background-color: #e5e7eb !important;
+}
+
+/* Mobile bottom bar */
+body.light-mode .mobile-bottom-bar {
+  background: rgba(255, 255, 255, 0.9) !important;
+}

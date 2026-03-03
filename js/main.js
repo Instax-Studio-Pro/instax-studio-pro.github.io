@@ -1031,10 +1031,7 @@ const App = (() => {
     if (themeToggle) {
       themeToggle.addEventListener('click', () => {
         state.darkMode = !state.darkMode;
-        document.body.classList.toggle('bg-gray-900', state.darkMode);
-        document.body.classList.toggle('bg-gray-100', !state.darkMode);
-        document.body.classList.toggle('text-white', state.darkMode);
-        document.body.classList.toggle('text-gray-900', !state.darkMode);
+        document.body.classList.toggle('light-mode', !state.darkMode);
         themeToggle.textContent = state.darkMode ? '☀️' : '🌙';
         showToast(state.darkMode ? 'Dark mode enabled' : 'Light mode enabled', 'info');
       });

@@ -39,7 +39,7 @@ const BackgroundEngine = (() => {
         const outputCanvas = document.createElement('canvas');
         outputCanvas.width = width;
         outputCanvas.height = height;
-        const ctx = outputCanvas.getContext('2d');
+        const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
         ctx.drawImage(sourceCanvas, 0, 0);
 
         const imageData = ctx.getImageData(0, 0, width, height);

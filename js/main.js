@@ -514,6 +514,7 @@ const App = (() => {
       });
       cropPosX.addEventListener('change', () => {
         saveCurrentImageSettings();
+        saveHistory();
       });
     }
 
@@ -525,6 +526,7 @@ const App = (() => {
       });
       cropPosY.addEventListener('change', () => {
         saveCurrentImageSettings();
+        saveHistory();
       });
     }
 
